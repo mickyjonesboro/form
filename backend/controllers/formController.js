@@ -120,9 +120,37 @@ export const getLink = async (req, res) => {
   }
 };
 
+export const checkLink = async (req, res) => {
+  const { link } = req.body;
+
+  // Ensure link is provided
+  if (!link) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Missing required field: link" });
+  }
+
+  // Correctly find the user by link
+  const linkDey = await prisma.user.findUnique({
+    where: { link },
+  });
+
+  // If link is not found
+  if (!linkDey) {
+    return res.status(200).json({ isValid: false });
+  }
+
+  // If link is found, check if it's active
+  if (linkDey.isActive == true) {
+    return res.status(200).json({ isValid: true });
+  } else {
+    return res.status(200).json({ isValid: false });
+  }
+};
+
 // Scheduling to ping the server to avoid inactivities
 
-cron.schedule("* * * * *", async() => {
+cron.schedule("*/10 * * * *", async () => {
   try {
     const response = await axios.get("https://form-d45b.onrender.com/ping");
     console.log(`Service won't sleep since ${response.status}`);
